@@ -68,14 +68,19 @@ cp preseed.cfg $WORKDIR/
 	fixSum isolinux.cfg ./isolinux/isolinux.cfg
 )
 
+cp setup.sh $WORKDIR/
+(
+	fixSum setup.sh ./tools/setup.sh
+)
+
 #####[ Writing new iso ]#####
 rm "$ISO_TARGET"
 xorriso -indev "$ISO_SRC" \
 	-map $WORKDIR/isolinux.cfg '/isolinux/isolinux.cfg' \
 	-map $WORKDIR/md5sum.txt '/md5sum.txt' \
+	-map $WORKDIR/setup.sh '/tools/setup.sh' \
 	-map $WORKDIR/initrd.gz '/install.amd/gtk/initrd.gz' \
 	-boot_image isolinux dir=/isolinux \
 	-outdev "$ISO_TARGET"
 
 rm -rf $WORKDIR
-

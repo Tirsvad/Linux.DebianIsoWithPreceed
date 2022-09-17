@@ -1,4 +1,4 @@
-![Foo](/tirsvadcms_logo.png)
+![Foo](/logo.png)
 # Linux.DebianIsoWithPreseed
 Build a custom debian iso included preseed.cfg based on the newest release.
 

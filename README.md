@@ -1,5 +1,4 @@
-![Foo](/logo.png)
-# Linux.DebianIsoWithPreseed
+# Linux.DebianIsoWithPreseed <img src="https://avatars.githubusercontent.com/u/74443654?s=400&u=482bac7c18c999bfbca7a851489ebbc75cc5e8d0&v=4" width="30" height="30">
 Build a custom debian iso included preseed.cfg based on the current release.
 
 ## Prerequisites

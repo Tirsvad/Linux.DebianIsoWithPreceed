@@ -24,6 +24,9 @@ In folder vm there is an script example that will build vm with Debian preseed I
 * Don't create swap partition
 * Install base system with ssh-server
 
-## preseed
+## Preseed
 1. Look at example https://www.debian.org/releases/bullseye/example-preseed.txt
 2. Read manual https://www.debian.org/releases/stable/amd64/apb.en.html
+
+### Default preseed 
+* Root password = r00tme

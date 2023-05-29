@@ -1,0 +1,3 @@
+[submodule "src/LinuxIsoWithPreseed/Vendor/Linux.Logger"]
+	path = src/LinuxIsoWithPreseed/Vendor/Linux.Logger
+	url = git@github.com:TirsvadCLI/Linux.Logger.git

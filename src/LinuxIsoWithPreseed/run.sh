@@ -26,14 +26,16 @@ declare -g TCLI_LINUXISOWITHPRESEED_PATH_SOURCE=$(realpath $(dirname $(readlink 
 ## @brief string filename of iso
 declare -g TCLI_LINUXISOWITHPRESEED_FILE_ISO=$( wget -qO - ${TCLI_LINUXISOWITHPRESEED_DOWNLOAD_URL}/SHA512SUMS | grep netinst | grep -v mac | head -n 1 | awk '{ print $2 }' )
 
+. $TCLI_LINUXISOWITHPRESEED_PATH_SOURCE/conf.sh
+
 ## @fn tcli_linuxisowithpreseed_init
 ## @details
 tcli_linuxisowithpreseed_init() {
-	if ! type -t tcli_logger_init >/dev/null; then
-		. $TCLI_LINUXISOWITHPRESEED_PATH_SOURCE/Vendor/Linux.Logger/src/Logger/run.sh
-		[ -d ./log ] || mkdir ./log
-		tcli_logger_init ./log/LinuxIsoWithPreseed.log
-	fi
+	type -t tcli_logger_init || {
+		. $TCLI_LINUXISOWITHPRESEED_PATH_SOURCE/Vendor/Linux.Logger/src/Logger/run.sh;
+		[ -d ./log ] || mkdir ./log;
+		tcli_logger_init ./log/LinuxIsoWithPreseed.log;
+	}
 	tcli_logger_file_info "Loaded" "TCLI Linux iso with preseed"
 }
 
@@ -50,7 +52,11 @@ tcli_linuxisowithpreseed_get_filename_from_iso() {
 tcli_linuxisowithpreseed_load_conf() {
 	tcli_logger_file_info "tcli linuxisowithpreseed loading configuration"
 	tcli_logger_infoscreen "Loading" "configuration"
-	. $TCLI_LINUXISOWITHPRESEED_PATH_SOURCE/conf.sh
+	[ ${TCLI_LINUXISOWITHPRESEED_VIRT_INSTALL_QEMU_CONNECT} == 'qemu:///system' ] && {
+		[[ $EUID -ne 0 ]] && {
+			tcli_logger_infoscreenFailedExit 'This script must be run as' 'root';
+		}
+	}
 
 	[ -d ${TCLI_LINUXISOWITHPRESEED_PATH_WORK} ] || mkdir -p ${TCLI_LINUXISOWITHPRESEED_PATH_WORK}
 	cd ${TCLI_LINUXISOWITHPRESEED_PATH_WORK}
@@ -116,15 +122,15 @@ tcli_linuxisowithpreseed_build_iso() {
 
 	tcli_logger_infoscreen "Create" "ISO file with preseed from ${TCLI_LINUXISOWITHPRESEED_ISO_SRC}"
 	#####[ Writing new iso ]#####
-	cd ${TCLI_LINUXISOWITHPRESEED_PATH_WORK_ISO}
-	rm -f ${TCLI_LINUXISOWITHPRESEED_ISO_TARGET}
-	xorriso -indev "${TCLI_LINUXISOWITHPRESEED_PATH_ISO}/${TCLI_LINUXISOWITHPRESEED_ISO_SRC}" \
+	cd ${TCLI_LINUXISOWITHPRESEED_PATH_WORK_ISO} >/dev/null
+	rm -f ${TCLI_LINUXISOWITHPRESEED_ISO_TARGET} >/dev/null
+	$(xorriso -indev "${TCLI_LINUXISOWITHPRESEED_PATH_ISO}/${TCLI_LINUXISOWITHPRESEED_ISO_SRC}" \
 		-map isolinux.cfg '/isolinux/isolinux.cfg' \
 		-map md5sum.txt '/md5sum.txt' \
 		-map setup.sh '/tools/setup.sh' \
 		-map initrd.gz '/install.amd/gtk/initrd.gz' \
 		-boot_image isolinux dir=/isolinux \
-		-outdev "${TCLI_LINUXISOWITHPRESEED_ISO_TARGET}"
+		-outdev "${TCLI_LINUXISOWITHPRESEED_ISO_TARGET}")
 	tcli_logger_infoscreenDone
 }
 
@@ -139,9 +145,9 @@ tcli_linuxisowithpreseed_vm_stop() {
 		return 1
 	fi
 	if [ $(virsh list --name --state-running | grep ${_vm}) ]; then
-		tcli_logger_infoscreen "stop"  "the old running VM ${_vm}"
+		tcli_logger_infoscreen "Stop"  "the old running VM ${_vm}"
 		tcli_logger_file_info "stop VM ${_vm}"
-		virsh destroy ${_vm} && tcli_logger_infoscreenDone || tcli_logger_infoscreenWarn
+		virsh destroy ${_vm} > /dev/null && tcli_logger_infoscreenDone || tcli_logger_infoscreenWarn
 	else
 			tcli_logger_file_info "skipped as no running VM ${_vm}"
 	fi
@@ -161,14 +167,14 @@ tcli_linuxisowithpreseed_vm_destoy() {
 	[ ! $(virsh snapshot-list --name --domain ${_vm} 2>/dev/null) =="" ] && (
 		tcli_logger_infoscreen "delete" "snapshot of ${_vm}"
 		for n in $(virsh snapshot-list --name --domain ${_vm}); do
-			virsh snapshot-delete ${_vm} $n
+			$(virsh snapshot-delete ${_vm} $n)
 		done
 		tcli_logger_infoscreenDone
 	) || tcli_logger_file_info "we found no vm" "linuxisowithpreseed_vm_destoy SKIPPED"
 
 	[ $(virsh list --name --all | grep ${_vm}) ] && (
 		tcli_logger_infoscreen "delete" "${_vm}"
-		virsh undefine ${_vm} --remove-all-storage
+		$(virsh undefine ${_vm} --remove-all-storage)
 		tcli_logger_infoscreenDone
 	)
 }
@@ -197,7 +203,7 @@ tcli_linuxisowithpreseed_vm_create() {
 	[ -f $TCLI_LINUXISOWITHPRESEED_PATH_QCOW2/$TCLI_LINUXISOWITHPRESEED_FILE_QCOW2_NAME ] || qemu-img create -f qcow2 -o preallocation=off $TCLI_LINUXISOWITHPRESEED_PATH_QCOW2/$TCLI_LINUXISOWITHPRESEED_FILE_QCOW2_NAME 10G
 
 	virt-install \
-	--connect qemu:///session \
+	--connect ${TCLI_LINUXISOWITHPRESEED_VIRT_INSTALL_QEMU_CONNECT} \
 	--virt-type kvm \
 	--name=$TCLI_LINUXISOWITHPRESEED_VM_NAME \
 	--cdrom $TCLI_LINUXISOWITHPRESEED_ISO_TARGET \
@@ -208,7 +214,7 @@ tcli_linuxisowithpreseed_vm_create() {
 	--console pty,target_type=serial \
 	--os-type=Linux \
 	--os-variant=debian10 \
-	--graphics spice 
+	--graphics ${TCLI_LINUXISOWITHPRESEED_VIRT_INSTALL_GRAPHICS} 
 	tcli_logger_infoscreenDone
 
 	tcli_logger_infoscreen "Installing" "OS on VM"

@@ -1,3 +1,4 @@
 /vm/setup.sh
 /src/LinuxIsoWithPreseed/setup.sh
 LinuxIsoWithPreseed.log
+src/LinuxIsoWithPreseed/Debian_11/preseed.cfg

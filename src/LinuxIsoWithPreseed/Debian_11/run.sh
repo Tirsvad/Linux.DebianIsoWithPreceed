@@ -1,11 +1,12 @@
 #!/bin/bash
 run() {
-	local _DIR=$(realpath $(dirname $(readlink -f ${BASH_SOURCE})))
-	. $_DIR/settings.sh
-	cp setup.sh $_DIR/../
-	. $_DIR/../run.sh
+	local _dir=$(realpath $(dirname $(readlink -f ${BASH_SOURCE})))
+	[ -f _DIR/setup.sh ] && cp -f setup.sh $_dir/../
+	. $(realpath $_dir/../run.sh)
+	# overrule default conf
+	. $_dir/settings.sh
 	tcli_linuxisowithpreseed_run
-	rm $_DIR/../setup.sh
+	# rm $_DIR/../setup.sh
 }
 
 run

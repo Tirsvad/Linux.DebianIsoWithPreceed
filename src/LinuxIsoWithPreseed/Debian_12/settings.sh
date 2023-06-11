@@ -8,8 +8,8 @@
 # _PATH_QCOW2 location where VM is saved
 #
 
-local _VM_NAME="debian_11_minimal"
-local _FILE_QCOW2_NAME="debian-11-minimal.qcow2"
+local _VM_NAME="debian_12_minimal"
+local _FILE_QCOW2_NAME="debian-12-minimal.qcow2"
 local  _PATH_QCOW2="/srv/vm"
 
-local _ISO_URL=https://cdimage.debian.org/cdimage/archive/11.7.0/amd64/iso-cd/
+local _ISO_URL=https://cdimage.debian.org/debian-cd/12.0.0/amd64/iso-cd/
